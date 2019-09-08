@@ -11,7 +11,7 @@ from tqdm import tqdm
 def main():
     parser = argparse.ArgumentParser(
         description="A little script for downloading all assets inside a Nexus 3 repository, "
-                    "following the the repository's format (e.g., Maven 2).")
+                    "following the repository's format (e.g., Maven 2).")
     parser.add_argument("server",
                         help="Root URL to Nexus 3 server; e.g., https://repo.loadingbyte.com")
     parser.add_argument("repo",
