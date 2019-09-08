@@ -1,6 +1,6 @@
 # Nexus 3 Exporter
 
-A little script for downloading all assets inside a Nexus 3 repository, following the the repository's asset format.
+A little script for downloading all assets inside a Nexus 3 repository, following the repository's asset format.
 For example, fed with a Nexus 3 Maven repositories, this script yields a standard Maven repository structure containing all artifacts.
 
 ## Usage
