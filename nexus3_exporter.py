@@ -5,10 +5,14 @@ from json.decoder import JSONDecodeError
 from urllib.parse import urljoin
 
 import requests
+import urllib3
 from tqdm import tqdm
 
 
 def main():
+    # Disable unverified TLS certificate warnings.
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
     parser = argparse.ArgumentParser(
         description="A little script for downloading all assets inside a Nexus 3 repository, "
                     "following the repository's format (e.g., Maven 2).")
