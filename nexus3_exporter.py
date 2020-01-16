@@ -25,29 +25,32 @@ def main():
                              "if none is provided, the repository name will be used.")
     parser.add_argument("-n", dest="no_verify", action="store_true",
                         help="Disable the SHA-1 hash verification of downloaded assets.")
+    parser.add_argument("-q", dest="quiet", action="store_true",
+                        help="Do not print anything but errors and two self-destroying progress bars.")
 
     args = parser.parse_args()
     server_url = args.server
     repo_name = args.repo
     output_dir = args.output_dir
     no_verify = args.no_verify
+    quiet = args.quiet
 
     if not output_dir:
         output_dir = repo_name
     if os.path.exists(output_dir):
-        print(f"Output directory '{output_dir}' already exists. Please delete it and then re-run the script.")
+        if not quiet: print(f"Output directory '{output_dir}' already exists. Please delete it and then re-run the script.")
         abort(1)
 
     if "://" not in server_url:
         server_url = "http://" + server_url
 
-    print("Fetching asset listing...")
-    asset_listing = fetch_asset_listing(server_url, repo_name)
-    print("Done!")
+    if not quiet: print("Fetching asset listing...")
+    asset_listing = fetch_asset_listing(quiet, server_url, repo_name)
+    if not quiet: print("Done!")
 
-    print("Downloading and verifying assets...")
-    download_assets(output_dir, no_verify, asset_listing)
-    print("Done!")
+    if not quiet: print("Downloading and verifying assets...")
+    download_assets(quiet, output_dir, no_verify, asset_listing)
+    if not quiet: print("Done!")
 
 
 def abort(code):
@@ -55,13 +58,13 @@ def abort(code):
     exit(code)
 
 
-def fetch_asset_listing(server_url, repo_name):
+def fetch_asset_listing(quiet, server_url, repo_name):
     asset_api_url = urljoin(server_url, f"service/rest/v1/assets?repository={repo_name}")
 
     asset_listing = []
     continuation_token = -1  # -1 is a special value hinting the first iteration
 
-    with tqdm(unit=" API requests") as pbar:
+    with tqdm(unit=" API requests", leave=not quiet) as pbar:
         while continuation_token:
             if continuation_token == -1:
                 query_url = asset_api_url
@@ -88,11 +91,11 @@ def fetch_asset_listing(server_url, repo_name):
     return asset_listing
 
 
-def download_assets(output_dir, no_verify, asset_listing):
-    with tqdm(asset_listing) as pbar:
+def download_assets(quiet, output_dir, no_verify, asset_listing):
+    with tqdm(asset_listing, leave=not quiet) as pbar:
         for asset in pbar:
             file_path = os.path.join(output_dir, asset["path"])
-            error = download_single_asset(file_path, no_verify, asset)
+            error = download_single_asset(quiet, file_path, no_verify, asset)
 
             if error:
                 pbar.close()
@@ -101,7 +104,7 @@ def download_assets(output_dir, no_verify, asset_listing):
                 abort(4)
 
 
-def download_single_asset(file_path, no_verify, asset):
+def download_single_asset(quiet, file_path, no_verify, asset):
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
     for tryy in range(1, 11):
@@ -114,10 +117,10 @@ def download_single_asset(file_path, no_verify, asset):
             return str(e)
 
         if no_verify:
-            tqdm.write(f"Downloaded '{file_path}' (not verified!)")
+            if not quiet: tqdm.write(f"Downloaded '{file_path}' (not verified!)")
             return False
         elif asset["checksum"]["sha1"] == sha1(file_path):
-            tqdm.write(f"Downloaded and verified '{file_path}' (try {tryy})")
+            if not quiet: tqdm.write(f"Downloaded and verified '{file_path}' (try {tryy})")
             return False
         else:
             tqdm.write(f"SHA-1 Verification failed on '{file_path}' (try {tryy}); retrying...")
