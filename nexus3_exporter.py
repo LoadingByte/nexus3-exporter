@@ -1,6 +1,7 @@
 import argparse
 import hashlib
 import os
+from getpass import getpass
 from json.decoder import JSONDecodeError
 from urllib.parse import urljoin
 
@@ -23,6 +24,8 @@ def main():
     parser.add_argument("-o", metavar="output_dir", dest="output_dir",
                         help="Directory where to store the downladed assets; "
                              "if none is provided, the repository name will be used.")
+    parser.add_argument("-u", metavar="username", dest="username",
+                        help="HTTP Basic Auth username; you will be prompted for the password.")
     parser.add_argument("-n", dest="no_verify", action="store_true",
                         help="Disable the SHA-1 hash verification of downloaded assets.")
     parser.add_argument("-q", dest="quiet", action="store_true",
@@ -32,6 +35,7 @@ def main():
     server_url = args.server
     repo_name = args.repo
     output_dir = args.output_dir
+    username = args.username
     no_verify = args.no_verify
     quiet = args.quiet
 
@@ -41,15 +45,17 @@ def main():
         if not quiet: print(f"Output directory '{output_dir}' already exists. Please delete it and then re-run the script.")
         abort(1)
 
+    auth = (username, getpass()) if username else None
+
     if "://" not in server_url:
         server_url = "http://" + server_url
 
     if not quiet: print("Fetching asset listing...")
-    asset_listing = fetch_asset_listing(quiet, server_url, repo_name)
+    asset_listing = fetch_asset_listing(quiet, auth, server_url, repo_name)
     if not quiet: print("Done!")
 
     if not quiet: print("Downloading and verifying assets...")
-    download_assets(quiet, output_dir, no_verify, asset_listing)
+    download_assets(quiet, auth, output_dir, no_verify, asset_listing)
     if not quiet: print("Done!")
 
 
@@ -58,7 +64,7 @@ def abort(code):
     exit(code)
 
 
-def fetch_asset_listing(quiet, server_url, repo_name):
+def fetch_asset_listing(quiet, auth, server_url, repo_name):
     asset_api_url = urljoin(server_url, f"service/rest/v1/assets?repository={repo_name}")
 
     asset_listing = []
@@ -72,7 +78,7 @@ def fetch_asset_listing(quiet, server_url, repo_name):
                 query_url = f"{asset_api_url}&continuationToken={continuation_token}"
 
             try:
-                resp = requests.get(query_url, verify=False).json()
+                resp = requests.get(query_url, auth=auth, verify=False).json()
             except IOError as e:
                 pbar.close()
                 print(f"IO error: {e}")
@@ -91,11 +97,11 @@ def fetch_asset_listing(quiet, server_url, repo_name):
     return asset_listing
 
 
-def download_assets(quiet, output_dir, no_verify, asset_listing):
+def download_assets(quiet, auth, output_dir, no_verify, asset_listing):
     with tqdm(asset_listing, leave=not quiet) as pbar:
         for asset in pbar:
             file_path = os.path.join(output_dir, asset["path"])
-            error = download_single_asset(quiet, file_path, no_verify, asset)
+            error = download_single_asset(quiet, auth, file_path, no_verify, asset)
 
             if error:
                 pbar.close()
@@ -104,12 +110,12 @@ def download_assets(quiet, output_dir, no_verify, asset_listing):
                 abort(4)
 
 
-def download_single_asset(quiet, file_path, no_verify, asset):
+def download_single_asset(quiet, auth, file_path, no_verify, asset):
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
     for tryy in range(1, 11):
         try:
-            r = requests.get(asset["downloadUrl"], verify=False)
+            r = requests.get(asset["downloadUrl"], auth=auth, verify=False)
             with open(file_path, "wb") as f:
                 f.write(r.content)
         except IOError as e:
