@@ -75,9 +75,9 @@ def fetch_asset_listing(quiet, server_url, repo_name):
                 resp = requests.get(query_url, verify=False).json()
             except IOError as e:
                 pbar.close()
-                print(str(e))
+                print(f"IO error: {e}")
                 abort(2)
-            except JSONDecodeError as e:
+            except JSONDecodeError:
                 pbar.close()
                 print(f"Cannot decode JSON response. Are you sure that the server URL {server_url} is correct and "
                       f"the repository '{repo_name}' actually exists?")
@@ -114,7 +114,7 @@ def download_single_asset(quiet, file_path, no_verify, asset):
                 f.write(r.content)
         except IOError as e:
             # The requests API tries multiple times internally, so if it can't connect, the connection is probably down.
-            return str(e)
+            return f"IO error: {e}"
 
         if no_verify:
             if not quiet: tqdm.write(f"Downloaded '{file_path}' (not verified!)")
@@ -123,7 +123,7 @@ def download_single_asset(quiet, file_path, no_verify, asset):
             if not quiet: tqdm.write(f"Downloaded and verified '{file_path}' (try {tryy})")
             return False
         else:
-            tqdm.write(f"SHA-1 Verification failed on '{file_path}' (try {tryy}); retrying...")
+            tqdm.write(f"SHA-1 verification failed on '{file_path}' (try {tryy}); retrying...")
 
     # If, after 10 tries, the SHA-1 hash is still wrong, something's probably corrupted.
     return "Repeated SHA-1 verification failure"
