@@ -101,6 +101,8 @@ def download_assets(quiet, auth, output_dir, no_verify, asset_listing):
     with tqdm(asset_listing, leave=not quiet) as pbar:
         for asset in pbar:
             file_path = os.path.join(output_dir, asset["path"])
+            relative_path = asset["path"].lstrip("/")
+            file_path = os.path.join(output_dir, relative_path)
             error = download_single_asset(quiet, auth, file_path, no_verify, asset)
 
             if error:
