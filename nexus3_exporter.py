@@ -22,7 +22,7 @@ def main():
     parser.add_argument("repo",
                         help="Name of repository whose assets shall be downloaded; e.g., maven-releases")
     parser.add_argument("-o", metavar="output_dir", dest="output_dir",
-                        help="Directory where to store the downladed assets; "
+                        help="Directory where to store the downloaded assets; "
                              "if none is provided, the repository name will be used.")
     parser.add_argument("-u", metavar="username", dest="username",
                         help="HTTP Basic Auth username; you will be prompted for the password.")
@@ -30,6 +30,9 @@ def main():
                         help="Disable the SHA-1 hash verification of downloaded assets.")
     parser.add_argument("-q", dest="quiet", action="store_true",
                         help="Do not print anything but errors and two self-destroying progress bars.")
+    parser.add_argument("-m", dest="mirror", action="store_true",
+                        help="Mirror-mode, don't check if output_dir is emtpy and skip downloads "
+                             "of already downloaded assets.")
 
     args = parser.parse_args()
     server_url = args.server
@@ -38,10 +41,11 @@ def main():
     username = args.username
     no_verify = args.no_verify
     quiet = args.quiet
+    mirror = args.mirror
 
     if not output_dir:
         output_dir = repo_name
-    if os.path.exists(output_dir):
+    if os.path.exists(output_dir) and not mirror:
         if not quiet: print(f"Output directory '{output_dir}' already exists. Please delete it and then re-run the script.")
         abort(1)
 
@@ -55,7 +59,7 @@ def main():
     if not quiet: print("Done!")
 
     if not quiet: print("Downloading and verifying assets...")
-    download_assets(quiet, auth, output_dir, no_verify, asset_listing)
+    download_assets(quiet, auth, output_dir, no_verify, asset_listing, mirror)
     if not quiet: print("Done!")
 
 
@@ -97,12 +101,13 @@ def fetch_asset_listing(quiet, auth, server_url, repo_name):
     return asset_listing
 
 
-def download_assets(quiet, auth, output_dir, no_verify, asset_listing):
+def download_assets(quiet, auth, output_dir, no_verify, asset_listing, mirror):
     with tqdm(asset_listing, leave=not quiet) as pbar:
         for asset in pbar:
-            file_path = os.path.join(output_dir, asset["path"])
             relative_path = asset["path"].lstrip("/")
             file_path = os.path.join(output_dir, relative_path)
+            if mirror and os.path.isfile(file_path) and os.stat(file_path).st_size == asset["fileSize"]:
+                continue
             error = download_single_asset(quiet, auth, file_path, no_verify, asset)
 
             if error:
