@@ -25,7 +25,8 @@ def main():
                         help="Directory where to store the downloaded assets; "
                              "if none is provided, the repository name will be used.")
     parser.add_argument("-u", metavar="username", dest="username",
-                        help="HTTP Basic Auth username; you will be prompted for the password.")
+                        help="HTTP Basic Auth username; you will be prompted for the password, "
+                             "unless you supply it via the NEXUS_PASSWORD environment variable.")
     parser.add_argument("-n", dest="no_verify", action="store_true",
                         help="Disable the SHA-1 hash verification of downloaded assets.")
     parser.add_argument("-m", dest="mirror", action="store_true",
@@ -49,7 +50,7 @@ def main():
         if not quiet: print(f"Output directory '{output_dir}' already exists. Please delete it and then re-run the script.")
         abort(1)
 
-    auth = (username, getpass()) if username else None
+    auth = (username, os.getenv("NEXUS_PASSWORD") or getpass()) if username else None
 
     if "://" not in server_url:
         server_url = "http://" + server_url

@@ -20,7 +20,7 @@ Optionally, you can supply:
 
 * `-h` shows a help page.
 * `-o output_dir` specifies the directory where to store the downloaded assets. If none is provided, the repository name will be used as the name of the output directory.
-* `-u username` specifies an HTTP Basic Auth username. You will be prompted for the password.
+* `-u username` specifies an HTTP Basic Auth username. You will be prompted for the password, unless you supply it via the `NEXUS_PASSWORD` environment variable.
 * `-n` disables the SHA-1 hash verification of downloaded assets.
 * `-m` enables mirror mode, i.e., doesn't check whether the output directory is emtpy, and skips downloading previously downloaded assets.
 * `-q` prints nothing but errors and two self-destroying progress bars.
