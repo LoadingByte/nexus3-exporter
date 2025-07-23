@@ -28,11 +28,11 @@ def main():
                         help="HTTP Basic Auth username; you will be prompted for the password.")
     parser.add_argument("-n", dest="no_verify", action="store_true",
                         help="Disable the SHA-1 hash verification of downloaded assets.")
+    parser.add_argument("-m", dest="mirror", action="store_true",
+                        help="Mirror-mode; don't check whether the output directory is emtpy, "
+                             "and skip downloading previously downloaded assets.")
     parser.add_argument("-q", dest="quiet", action="store_true",
                         help="Do not print anything but errors and two self-destroying progress bars.")
-    parser.add_argument("-m", dest="mirror", action="store_true",
-                        help="Mirror-mode, don't check if output_dir is emtpy and skip downloads "
-                             "of already downloaded assets.")
 
     args = parser.parse_args()
     server_url = args.server
@@ -40,8 +40,8 @@ def main():
     output_dir = args.output_dir
     username = args.username
     no_verify = args.no_verify
-    quiet = args.quiet
     mirror = args.mirror
+    quiet = args.quiet
 
     if not output_dir:
         output_dir = repo_name

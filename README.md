@@ -9,7 +9,7 @@ You need Python 3 to run this script. You also need to install the requirements 
 
 Launch the script with:
 
-    python3 nexus3_exporter.py [-h] [-o output_dir] [-u username] [-n] <server> <repo>
+    python3 nexus3_exporter.py [-h] [-o output_dir] [-u username] [-n] [-m] [-q] <server> <repo>
 
 You have to supply two arguments:
 
@@ -19,9 +19,11 @@ You have to supply two arguments:
 Optionally, you can supply:
 
 * `-h` shows a help page.
-* `-o output_dir` specifies the directory where to store the downladed assets. If none is provided, the repository name will be used as the name of the output directory.
+* `-o output_dir` specifies the directory where to store the downloaded assets. If none is provided, the repository name will be used as the name of the output directory.
 * `-u username` specifies an HTTP Basic Auth username. You will be prompted for the password.
 * `-n` disables the SHA-1 hash verification of downloaded assets.
+* `-m` enables mirror mode, i.e., doesn't check whether the output directory is emtpy, and skips downloading previously downloaded assets.
+* `-q` prints nothing but errors and two self-destroying progress bars.
 
 Example call:
 
